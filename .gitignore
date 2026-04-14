@@ -8,7 +8,7 @@ smartmontools.md
 zsh_history.md
 /*.md
 !/changelog.md
-!/README.md
+/README.md
 #/package-lock.json
 origin_theme.css
 .vitepress/cache
