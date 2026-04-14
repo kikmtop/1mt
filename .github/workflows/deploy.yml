@@ -1,0 +1,64 @@
+# 工作流名称
+name: Deploy VitePress to GitHub Pages
+
+# 触发条件：push 到 main 分支时自动运行
+on:
+    push:
+        branches: [master]
+    # 允许手动触发部署
+    workflow_dispatch:
+
+# 设置权限
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+# 并发控制
+concurrency:
+    group: pages
+    cancel-in-progress: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            # 1. 拉取代码
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            # 2. 安装 Node.js
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm # 缓存依赖，加速构建
+
+            # 3. 安装依赖
+            - name: Install dependencies
+              run: npm install
+
+            # 4. 构建 VitePress 静态文件
+            - name: Build VitePress
+              run: npm run build
+
+            # 5. 上传构建产物
+            - name: Upload artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: .vitepress/dist # VitePress 构建输出目录
+
+    # 部署到 GitHub Pages
+    deploy:
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        needs: build
+        runs-on: ubuntu-latest
+        name: Deploy
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
